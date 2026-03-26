@@ -74,6 +74,11 @@ class GameEngine {
   }
 
   markRulesAudioFinished(roomCode, watcherSocketId) {
+    const room = this.roomManager.getRoomByCode(roomCode);
+    if (!room) {
+      return null;
+    }
+
     const state = this.gameStateManager.getGameState(roomCode) || {};
     if (state.phase !== GAME_PHASES.RULES_AUDIO) {
       throw new Error("INVALID_STATE_TRANSITION");
@@ -98,10 +103,15 @@ class GameEngine {
     if (isComplete) {
       this.#enterRoundStart(roomCode);
     }
-    return this.roomManager.getRoomOrThrow(roomCode);
+    return this.roomManager.getRoomByCode(roomCode);
   }
 
   handleWatcherDisconnected(roomCode, watcherSocketId) {
+    const room = this.roomManager.getRoomByCode(roomCode);
+    if (!room) {
+      return;
+    }
+
     const state = this.gameStateManager.getGameState(roomCode) || {};
     if (state.phase !== GAME_PHASES.RULES_AUDIO) {
       return;
