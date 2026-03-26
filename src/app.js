@@ -1,6 +1,7 @@
 const express = require("express");
 const http = require("http");
 const path = require("path");
+const cors = require("cors");
 const { Server } = require("socket.io");
 
 const { SOCKET_EVENTS } = require("./core/constants");
@@ -15,6 +16,9 @@ const { listGames } = require("./games");
 function createApp() {
   const app = express();
   const server = http.createServer(app);
+
+  // Enable CORS for HTTP API (e.g. /games) so the Vite client on localhost can call the deployed backend.
+  app.use(cors({ origin: "*" }));
 
   const io = new Server(server, {
     cors: {
