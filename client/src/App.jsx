@@ -357,7 +357,18 @@ export function App() {
         </section>
       )}
 
-      {mode === "play" && (gameState?.screen === "answering" || gameState?.screen === "round_start") && (
+      {mode === "play" && gameState?.screen === "round_start" && (
+        <section className="card screen roundStartStage" key={`play-round_start-${screenVersion}`}>
+          <p className="roundStartBadge">
+            Round {gameState.round || "-"} / {gameState.totalRounds || "-"}
+          </p>
+          <h2 className="roundStartTitle">Get ready</h2>
+          <p className="question roundStartQuestion">{gameState.question}</p>
+          <div className="countdown">{gameState.countdownSeconds || 0}</div>
+        </section>
+      )}
+
+      {mode === "play" && gameState?.screen === "answering" && (
         <section className="card screen" key={`answering-${screenVersion}`}>
           <h2>Question</h2>
           <p className="question">{gameState.question}</p>
@@ -520,9 +531,12 @@ export function App() {
       )}
 
       {mode === "tv" && gameState?.screen === "round_start" && (
-        <section className="card screen" key={`round_start-${screenVersion}`}>
-          <h2>Get ready</h2>
-          <p className="question">{gameState.question}</p>
+        <section className="card screen roundStartStage" key={`round_start-${screenVersion}`}>
+          <p className="roundStartBadge">
+            Round {gameState.round || "-"} / {gameState.totalRounds || "-"}
+          </p>
+          <h2 className="roundStartTitle">Get ready</h2>
+          <p className="question roundStartQuestion">{gameState.question}</p>
           <div className="countdown">{gameState.countdownSeconds || 0}</div>
         </section>
       )}

@@ -4,7 +4,7 @@ const humoristGame = {
   description: "Игроки придумывают смешные ответы и голосуют за лучший.",
   config: {
     totalRounds: 5,
-    roundStartDelaySeconds: 2,
+    roundStartDelaySeconds: 10,
     roundDurationSeconds: 60,
     votingDurationSeconds: 30,
     revealAnswerSeconds: 5,

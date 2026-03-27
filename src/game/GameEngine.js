@@ -275,6 +275,7 @@ class GameEngine {
     this.#clearRoundStartTimer(roomCode);
     const current = this.gameStateManager.getGameState(roomCode) || {};
     const nextQuestionPick = this.#pickQuestion(current);
+    const delaySeconds = current.roundStartDelaySeconds || this.roundStartDelaySeconds;
     this.#transitionPhase(roomCode, GAME_PHASES.ROUND_START, {
       round: round || current.round || 1,
       roundStartedAt: Date.now(),
@@ -307,7 +308,7 @@ class GameEngine {
       } catch (_error) {
         this.#clearRoundStartTimer(roomCode);
       }
-    }, this.roundStartDelaySeconds * 1000);
+    }, delaySeconds * 1000);
 
     this.roundStartTimers.set(roomCode, timeoutId);
   }

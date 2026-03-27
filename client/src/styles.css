@@ -288,6 +288,30 @@ button:disabled {
   animation: screenIn 320ms ease;
 }
 
+.roundStartStage {
+  text-align: center;
+  gap: 16px;
+}
+
+.roundStartBadge {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 800;
+  color: #1f2937;
+}
+
+.roundStartTitle {
+  margin: 0;
+  font-size: 42px;
+  line-height: 1;
+}
+
+.roundStartQuestion {
+  font-size: 36px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
 @keyframes screenIn {
   from {
     opacity: 0;

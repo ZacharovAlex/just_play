@@ -1,12 +1,14 @@
 const { CODE_ALPHABET, ROOM_CODE_LENGTH, ROOM_STATES } = require("../core/constants");
 
 class RoomManager {
-  constructor() {
+  constructor({ emptyRoomTtlMs = 30_000 } = {}) {
     this.roomsByCode = new Map();
     this.playerToRoom = new Map();
     this.socketToPlayer = new Map();
     this.watcherToRoom = new Map();
     this.roomToWatchers = new Map();
+    this.emptyRoomTtlMs = emptyRoomTtlMs;
+    this.emptyRoomTimers = new Map();
   }
 
   createRoom({ hostSocketId, hostName, playerId, gameId, gameConfig, gameTitle }) {
@@ -54,16 +56,21 @@ class RoomManager {
       throw new Error("SOCKET_ALREADY_BOUND");
     }
 
+    const shouldBecomeHost = room.players.size === 0 || !room.hostPlayerId || !room.players.has(room.hostPlayerId);
     room.players.set(playerId, {
       playerId,
       socketId,
       name: playerName,
       joinedAt: Date.now(),
-      isHost: false,
+      isHost: shouldBecomeHost,
       isConnected: true,
       disconnectedAt: null
     });
+    if (shouldBecomeHost) {
+      room.hostPlayerId = playerId;
+    }
     room.updatedAt = Date.now();
+    this.#clearEmptyRoomTimer(roomCode);
     this.playerToRoom.set(playerId, roomCode);
     this.socketToPlayer.set(socketId, playerId);
     return room;
@@ -148,7 +155,8 @@ class RoomManager {
     this.socketToPlayer.delete(socketId);
 
     if (room.players.size === 0) {
-      this.roomsByCode.delete(roomCode);
+      room.hostPlayerId = null;
+      this.#scheduleEmptyRoomCleanup(roomCode, room);
       return { roomClosed: true, roomCode, room, leavingPlayer };
     }
 
@@ -184,7 +192,8 @@ class RoomManager {
     this.playerToRoom.delete(playerId);
 
     if (room.players.size === 0) {
-      this.roomsByCode.delete(roomCode);
+      room.hostPlayerId = null;
+      this.#scheduleEmptyRoomCleanup(roomCode, room);
       return { roomClosed: true, roomCode, room, player };
     }
 
@@ -226,7 +235,8 @@ class RoomManager {
     }
 
     if (room.players.size === 0) {
-      this.roomsByCode.delete(roomCode);
+      room.hostPlayerId = null;
+      this.#scheduleEmptyRoomCleanup(roomCode, room);
       return { roomClosed: true, roomCode, room, leavingPlayer };
     }
 
@@ -394,6 +404,36 @@ class RoomManager {
       this.#deepFreeze(value[key]);
     }
     return value;
+  }
+
+  #scheduleEmptyRoomCleanup(roomCode, room) {
+    this.#clearEmptyRoomTimer(roomCode);
+    room.state = ROOM_STATES.LOBBY;
+    room.gameState = null;
+    room.emptySince = Date.now();
+    const timeoutId = setTimeout(() => {
+      const currentRoom = this.roomsByCode.get(roomCode);
+      if (!currentRoom) {
+        this.emptyRoomTimers.delete(roomCode);
+        return;
+      }
+      if (currentRoom.players.size > 0) {
+        this.emptyRoomTimers.delete(roomCode);
+        return;
+      }
+      this.roomsByCode.delete(roomCode);
+      this.emptyRoomTimers.delete(roomCode);
+    }, this.emptyRoomTtlMs);
+    this.emptyRoomTimers.set(roomCode, timeoutId);
+  }
+
+  #clearEmptyRoomTimer(roomCode) {
+    const timer = this.emptyRoomTimers.get(roomCode);
+    if (!timer) {
+      return;
+    }
+    clearTimeout(timer);
+    this.emptyRoomTimers.delete(roomCode);
   }
 }
 
