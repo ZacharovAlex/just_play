@@ -448,7 +448,6 @@ export function App() {
                   onChange={(e) => setVoteTarget(e.target.value)}
                 />
                 <div className="voteContent">
-                  {a.name && <strong className="voteName">{a.name}</strong>}
                   <span className="voteAnswer">{a.answer}</span>
                   {/* Vote counts are intentionally hidden on player screen */}
                 </div>
