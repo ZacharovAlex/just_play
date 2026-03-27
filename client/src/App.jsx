@@ -364,7 +364,6 @@ export function App() {
           </p>
           <h2 className="roundStartTitle">Get ready</h2>
           <p className="question roundStartQuestion">{gameState.question}</p>
-          <div className="countdown">{gameState.countdownSeconds || 0}</div>
         </section>
       )}
 
@@ -537,7 +536,6 @@ export function App() {
           </p>
           <h2 className="roundStartTitle">Get ready</h2>
           <p className="question roundStartQuestion">{gameState.question}</p>
-          <div className="countdown">{gameState.countdownSeconds || 0}</div>
         </section>
       )}
 
