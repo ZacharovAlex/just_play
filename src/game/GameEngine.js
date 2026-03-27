@@ -31,7 +31,18 @@ class GameEngine {
     const totalRounds = gameConfig.totalRounds || this.totalRounds;
     const roundStartDelaySeconds = gameConfig.roundStartDelaySeconds || this.roundStartDelaySeconds;
     const revealAnswerSeconds = gameConfig.revealAnswerSeconds || this.revealAnswerSeconds;
-    const questions = Array.isArray(gameConfig.questions) ? gameConfig.questions : this.questions;
+    const rawQuestions = Array.isArray(gameConfig.questions) ? gameConfig.questions : this.questions;
+    const questions = Array.from(
+      new Set(
+        rawQuestions
+          .map((q) => String(q || "").trim())
+          .filter(Boolean)
+      )
+    );
+    if (questions.length < totalRounds) {
+      throw new Error("NOT_ENOUGH_QUESTIONS_FOR_ROUNDS");
+    }
+    const questionOrder = this.#shuffleArray(questions);
     const rulesAudioUrl = gameConfig.rulesAudioUrl || null;
     const pendingWatcherIds = Array.from(this.roomManager.getWatchersForRoom(roomCode));
 
@@ -48,6 +59,8 @@ class GameEngine {
       revealAnswerSeconds,
       votingDurationSeconds,
       questions,
+      questionOrder,
+      questionCursor: 0,
       currentQuestion: null,
       answersByPlayerId: {},
       votesByVoterId: {},
@@ -261,11 +274,13 @@ class GameEngine {
   #enterRoundStart(roomCode, { round, remainingSeconds } = {}) {
     this.#clearRoundStartTimer(roomCode);
     const current = this.gameStateManager.getGameState(roomCode) || {};
+    const nextQuestionPick = this.#pickQuestion(current);
     this.#transitionPhase(roomCode, GAME_PHASES.ROUND_START, {
       round: round || current.round || 1,
       roundStartedAt: Date.now(),
       remainingSeconds: remainingSeconds || current.roundDurationSeconds || this.roundDurationSeconds,
-      currentQuestion: this.#pickQuestion(round || current.round || 1, current.questions),
+      currentQuestion: nextQuestionPick.question,
+      questionCursor: nextQuestionPick.nextCursor,
       answersByPlayerId: {},
       votesByVoterId: {},
       voteCounts: {},
@@ -554,13 +569,36 @@ class GameEngine {
     }));
   }
 
-  #pickQuestion(round, questionsList) {
-    const list = Array.isArray(questionsList) && questionsList.length > 0 ? questionsList : this.questions;
-    if (!list.length) {
-      return "Question";
+  #pickQuestion(gameState) {
+    const order = Array.isArray(gameState?.questionOrder) ? gameState.questionOrder : [];
+    if (!order.length) {
+      return {
+        question: "Question",
+        nextCursor: 0
+      };
     }
-    const index = (round - 1) % list.length;
-    return list[index];
+
+    const cursor = Number.isInteger(gameState?.questionCursor) ? gameState.questionCursor : 0;
+    if (cursor >= order.length) {
+      return {
+        question: order[order.length - 1],
+        nextCursor: order.length
+      };
+    }
+
+    return {
+      question: order[cursor],
+      nextCursor: cursor + 1
+    };
+  }
+
+  #shuffleArray(input) {
+    const list = [...input];
+    for (let i = list.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [list[i], list[j]] = [list[j], list[i]];
+    }
+    return list;
   }
 }
 

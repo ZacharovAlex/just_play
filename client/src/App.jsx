@@ -357,7 +357,7 @@ export function App() {
         </section>
       )}
 
-      {mode === "play" && gameState?.screen === "answering" && (
+      {mode === "play" && (gameState?.screen === "answering" || gameState?.screen === "round_start") && (
         <section className="card screen" key={`answering-${screenVersion}`}>
           <h2>Question</h2>
           <p className="question">{gameState.question}</p>
@@ -366,7 +366,7 @@ export function App() {
             value={answer}
             onChange={(e) => setAnswer(e.target.value)}
           />
-          <button onClick={onSubmitAnswer} disabled={!answer.trim()}>
+          <button onClick={onSubmitAnswer} disabled={!answer.trim() || gameState?.screen !== "answering"}>
             {answerSubmitted ? "Update answer" : "Send answer"}
           </button>
           {answerSubmitted && (
@@ -519,7 +519,7 @@ export function App() {
         </section>
       )}
 
-      {gameState?.screen === "round_start" && (
+      {mode === "tv" && gameState?.screen === "round_start" && (
         <section className="card screen" key={`round_start-${screenVersion}`}>
           <h2>Get ready</h2>
           <p className="question">{gameState.question}</p>
